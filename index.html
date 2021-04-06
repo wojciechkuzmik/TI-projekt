@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pl-PL">
+    <head>
+        <meta charset="UTF-8">
+        <title>Symulator rzutu ukośnego</title>
+        <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+        <img src="logo.png" alt="Logo" width="151" height="83" style="float: right;">
+        <div class="header">
+            <article>
+                <h2>Symulator rzutu ukośnego</h2>
+                Rzut ukośny – ruch w jednorodnym polu grawitacyjnym z prędkością początkową o kierunku ukośnym do kierunku pola.
+                Ruch ten odpowiada ruchowi ciała rzuconego pod kątem do poziomu.
+            </article><br>
+            <img src="img.jpg" alt="Wzór">
+        </div>
+        
+        <div class="row">
+            <div class="column"><label for="v0">v0 [m/s]:</label><br>
+                <input type="text" id="v0" value="25"><br><br>
+                <label for="angle">Kąt (w stopniach):</label><br>
+                <input type="text" id="angle" value="45"><br><br>
+                <label for="height">Wysokość początkowa [m]:</label><br>
+                <input type="text" id="height" value="0"><br><br>
+                <label for="g">Wartość przyspieszenia grawitacyjnego [m/s^2]:</label><br>
+                <input type="text" id="g" value="9.81"><br><br>
+                <label for="range">Zakres wykresu:</label><br>
+                <input type="text" id="range" value="100"><br><br>
+                <label for="r">Rozmiar piłki:</label><br>
+                <input type="range" id="r" value="10" min="1" max="20"><br><br>
+                <label for="stop">Stop </label>
+                <input type="checkbox" id="stop"><br><br>
+                <label for="cursors">Kursory </label>
+                <input type="checkbox" id="cursors"><br><br>
+                <label for="timeControl">Kontrola czasu [s]</label>
+                <input type="checkbox" id="timeControl"><input type="text" id="time" value="0" disabled><br><br></div>
+            <div class="column"><canvas id="canvas" width = "500" height = "500"></canvas></div>
+        </div>
+        
+        <div class="footer">
+            Wojciech Kuźmik - Techniki Internetowe - projekt I
+        </div>
+        
+        <script>
+            var ctx = document.getElementById('canvas').getContext('2d');
+            var t0 = (new Date()).getTime();
+            var x0 = 0;
+            var y0 = ctx.canvas.clientHeight;
+            var x = x0;
+            var y = y0;
+            var t1Previous = (new Date()).getTime();
+            var t2 = (new Date()).getTime();
+            
+            function animate() {
+                var v0 = parseFloat(document.getElementById('v0').value);
+                var g = parseFloat(document.getElementById('g').value);
+                var dt = 0.1;
+                var alfa = parseFloat(document.getElementById('angle').value);
+                var height = parseFloat(document.getElementById('height').value);
+                var angle = alfa*2*Math.PI/360;
+                var yMax = v0*v0*Math.sin(angle)*Math.sin(angle)/(2*g) + height;
+                var xMax = v0*v0*Math.sin(2*angle)/(2*g) + v0*Math.cos(angle)*Math.sqrt(2*yMax/g);
+                var range = parseFloat(document.getElementById('range').value);
+                var r = parseFloat(document.getElementById('r').value);
+                ctx.strokeStyle = 'black';
+                requestAnimationFrame(animate);
+                ctx.clearRect(0, 0, innerWidth, innerHeight);
+                ctx.moveTo(0, ctx.canvas.clientHeight);
+                ctx.lineTo(0, 0);
+                ctx.moveTo(0, ctx.canvas.clientHeight);
+                ctx.lineTo(ctx.canvas.clientWidth, ctx.canvas.clientHeight);
+                ctx.stroke();
+
+                ctx.fillText("max " + xMax.toFixed(2) + " m", ctx.canvas.clientWidth*xMax/range, ctx.canvas.clientHeight - 14);
+                ctx.fillText("max " + yMax.toFixed(2) + " m", 10, ctx.canvas.clientHeight - ctx.canvas.clientHeight*yMax/range);
+                ctx.moveTo(0, ctx.canvas.clientHeight - ctx.canvas.clientHeight*yMax/range);
+                ctx.lineTo(10, ctx.canvas.clientHeight - ctx.canvas.clientHeight*yMax/range);
+                ctx.moveTo(ctx.canvas.clientWidth*xMax/range, ctx.canvas.clientHeight);
+                ctx.lineTo(ctx.canvas.clientWidth*xMax/range, ctx.canvas.clientHeight - 10);
+
+                ctx.stroke();
+                ctx.strokeStyle = 'black';
+                var step1 = ctx.canvas.clientHeight/10;
+                for(var i = ctx.canvas.clientHeight, j = 0; i > 0; i -= step1, j++){
+                    ctx.moveTo(0, i);
+                    ctx.lineTo(4, i);
+                    ctx.stroke();
+                    if(j%2 == 1){
+                        ctx.fillText((ctx.canvas.clientHeight - i)*range/ctx.canvas.clientHeight + " m", 5, i);
+                    }
+                }
+                var step2 = ctx.canvas.clientWidth/10;
+                for(var i = ctx.canvas.clientWidth, j = 0; i > 0; i -= step2, j++){
+                    ctx.moveTo(i, ctx.canvas.clientHeight);
+                    ctx.lineTo(i, ctx.canvas.clientHeight - 4);
+                    ctx.stroke();
+                    if(j%2 == 0){
+                        ctx.fillText(i*range/ctx.canvas.clientWidth + " m", i, ctx.canvas.clientHeight - 5);
+                    }
+                }
+                
+                if(document.getElementById('stop').checked){
+                    var t1 = t1Previous;
+                    t2 = (new Date()).getTime();
+                }
+                else{
+                    var t1 = (new Date()).getTime();
+                    t1 -= t2;
+                    t1Previous = t1;
+                }
+                
+                if(document.getElementById('timeControl').checked){
+                    document.getElementById('time').disabled = false;
+                    t = parseFloat(document.getElementById('time').value);
+                }
+                else{
+                    document.getElementById('time').disabled = true;
+                    t = (t1 - t0)/1000;
+                }
+                    
+                ctx.fillText("t: " + t.toFixed(2) + " s", ctx.canvas.clientWidth - 90, 10, 90);
+                ctx.fillText("Vx: " + (v0*Math.cos(angle)).toFixed(2) + " m/s", ctx.canvas.clientWidth - 90, 20, 90);
+                ctx.fillText("Vy: " + ((v0*Math.sin(angle)-g*t)).toFixed(2) + " m/s", ctx.canvas.clientWidth - 90, 30, 90);
+
+                if(document.getElementById('cursors').checked){
+                    ctx.strokeStyle = 'grey';
+                    ctx.fillText(((y0-y)*range/ctx.canvas.clientWidth).toFixed(2) + " m", ctx.canvas.clientWidth - 50, y - 2, 50);
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(ctx.canvas.clientWidth, y);
+                    ctx.stroke();
+                    ctx.fillText((x*range/ctx.canvas.clientHeight).toFixed(2) + " m", x + 2, 20);
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.clientHeight);
+                    ctx.stroke();
+                }
+                ctx.strokeStyle = 'black';
+
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI*2, false);
+                ctx.stroke();
+
+                x = v0*t*Math.cos(angle);
+                x *= ctx.canvas.clientWidth/range;
+                y = v0*t*Math.sin(angle) - g*t*t/2 + height;
+                y *= y0/range;
+                y = y - y0;
+                y = -y;
+                
+                if(y > ctx.canvas.clientHeight || x > ctx.canvas.clientWidth) {
+                    t0 = t1;
+                }
+            }
+            animate();
+        </script>
+    </body>
+</html>
